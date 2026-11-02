@@ -1,7 +1,5 @@
 # jankk
-
-
-https://github.com/user-attachments/assets/129b402a-7a29-4d5a-ae1e-b7e1eacf4a4e
+https://github.com/user-attachments/assets/3bb139e8-0470-4de8-90d2-8cc35d136bf8
 
 > **Note:** UI will get massive changes and overhaul so it wont be same as the preview shows.
 
