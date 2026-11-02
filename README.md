@@ -1,5 +1,10 @@
 # jankk
 
+
+https://github.com/user-attachments/assets/129b402a-7a29-4d5a-ae1e-b7e1eacf4a4e
+
+> **Note:** UI will get massive changes and overhaul so it wont be same as the preview shows.
+
 A fast, controller-style launcher and frontend for Game Boy Advance games(!only), built with Qt Quick and [mGBA](https://mgba.io/).
 
 ## Install
