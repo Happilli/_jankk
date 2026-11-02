@@ -11,6 +11,18 @@ Window {
     GbaView {
         anchors.fill: parent
         source: emu
+        focus: true
+
+        Component.onCompleted: forceActiveFocus()
+
+        Keys.onPressed: e => {
+            if (!e.isAutoRepeat)
+                emu.keyEvent(e.key, true);
+        }
+        Keys.onReleased: e => {
+            if (!e.isAutoRepeat)
+                emu.keyEvent(e.key, false);
+        }
     }
 
     Emulator {
