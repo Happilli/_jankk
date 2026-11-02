@@ -1,0 +1,45 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install dependencies
+        run: |
+          pacman -Syu --noconfirm --needed base-devel git cmake ninja \
+            qt6-base qt6-declarative qt6-multimedia-ffmpeg qt6-svg \
+            qt6-shadertools qt6-tools libmgba
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr
+          ninja -C build
+
+      - name: Package
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          DESTDIR="$PWD/stage" ninja -C build install
+          tar -C stage -czf "jankk-${VERSION}-x86_64.tar.gz" usr
+          sha256sum "jankk-${VERSION}-x86_64.tar.gz" | tee SHA256SUMS
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            jankk-*-x86_64.tar.gz
+            SHA256SUMS
