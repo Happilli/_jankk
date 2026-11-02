@@ -5,6 +5,9 @@
 #include <QtQmlIntegration/qqmlintegration.h>
 #include <atomic>
 
+class QAudioSink                              ;
+class AudioRing                               ;
+
 class Emulator : public QThread {
   Q_OBJECT
   QML_ELEMENT
@@ -30,5 +33,7 @@ private:
   QString m_path                              ;
   std::atomic<bool> m_quit{false}             ;
   std::atomic<uint32_t> m_keys{0}             ;
+  QAudioSink *m_sink = nullptr                ;
+  AudioRing *m_ring = nullptr                 ;
 
 }                                             ;
