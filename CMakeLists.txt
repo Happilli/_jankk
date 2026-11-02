@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(jankk VERSION 0.1 LANGUAGES CXX)
+project(jankk VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -82,3 +82,4 @@ qt_import_qml_plugins(jankk)
 qt_add_executable(headless_test src/headless_test.cpp)
 target_include_directories(headless_test PRIVATE "${MGBA_INCLUDE_DIR}")
 target_link_libraries(headless_test PRIVATE Qt6::Core Qt6::Gui "${MGBA_LIBRARY}")
+target_compile_definitions(jankk PRIVATE JANKK_VERSION="${PROJECT_VERSION}")
