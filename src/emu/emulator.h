@@ -21,6 +21,7 @@ public:
 
   Q_INVOKABLE void keyEvent(int qtKey,
       bool pressed)                           ;
+  Q_INVOKABLE void releaseAll()               ;
 
 signals:
   void frameReady(const QImage &frame)        ;

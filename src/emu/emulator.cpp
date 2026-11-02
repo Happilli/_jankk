@@ -234,3 +234,7 @@ void Emulator::keyEvent(int qtKey, bool pressed) {
   else
     m_keys.fetch_and(~bit)                  ;
 }
+
+void Emulator::releaseAll() {
+  m_keys = 0                                ;
+}
