@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
+import QtQuick.Shapes
 import QtMultimedia
 import Ryu.Extraa
 import Jankk
@@ -15,6 +16,8 @@ Window {
 
     property bool playing: false
     property bool sfxMuted: false
+    property bool hintVisible: false
+    property string errorText: ""
     property alias query: searchBox.text
 
     QtObject {
@@ -23,9 +26,15 @@ Window {
         readonly property color surface: "#1D1B20"
         readonly property color surfaceHigh: "#2B2930"
         readonly property color primary: "#D0BCFF"
+        readonly property color primaryContainer: "#4F378B"
+        readonly property color tertiary: "#EFB8C8"
+        readonly property color danger: "#F2B8B5"
+        readonly property color dangerContainer: "#601410"
         readonly property color textMain: "#E6E0E9"
+        readonly property color dangerText: "#F9DEDC"
         readonly property color textDim: "#CAC4D0"
         readonly property color outline: "#938F99"
+        readonly property color outlineVariant: "#49454F"
         readonly property string font: "Google Sans"
         readonly property int margin: 64
     }
@@ -34,6 +43,36 @@ Window {
         property string file
         source: "qrc:/qt/qml/Jankk/sfx/" + file + ".wav"
         volume: 0.8
+    }
+
+    component KeyHint: Row {
+        id: hint
+        property string keyText: ""
+        property string label: ""
+        spacing: 8
+
+        Item {
+            width: Math.max(28, keyLabel.implicitWidth + 16)
+            height: 22
+
+            Text {
+                id: keyLabel
+                anchors.centerIn: parent
+                text: hint.keyText
+                color: theme.primary
+                font.family: theme.font
+                font.pixelSize: 12
+                font.bold: true
+            }
+        }
+        Text {
+            height: 22
+            verticalAlignment: Text.AlignVCenter
+            text: hint.label
+            color: theme.textDim
+            font.family: theme.font
+            font.pixelSize: 13
+        }
     }
 
     Sfx {
@@ -87,15 +126,30 @@ Window {
         onTriggered: sfxBoot.play()
     }
 
+    Timer {
+        id: errorTimer
+        interval: 3500
+        onTriggered: win.errorText = ""
+    }
+
+    Timer {
+        id: hintTimer
+        interval: 2800
+        onTriggered: win.hintVisible = false
+    }
+
     function launch(path) {
         sfxLaunch.play();
         emu.play(path);
         playing = true;
+        hintVisible = true;
+        hintTimer.restart();
     }
     function exitGame() {
         sfxExit.play();
         emu.stop();
         playing = false;
+        hintVisible = false;
     }
     function toggleFullscreen() {
         sfxFullscreen.play();
@@ -110,7 +164,13 @@ Window {
 
     Emulator {
         id: emu
-        onError: msg => win.playing = false
+        onError: msg => {
+            win.playing = false;
+            win.hintVisible = false;
+            win.errorText = msg;
+            errorTimer.restart();
+            sfxNoMatch.play();
+        }
     }
 
     FocusScope {
@@ -121,42 +181,25 @@ Window {
         visible: !win.playing
         focus: !win.playing
 
-        Image {
-            id: bg
+        Item {
+            id: bgStack
             anchors.fill: parent
-            source: launcher.bgSource
-            fillMode: Image.PreserveAspectCrop
-            asynchronous: false
-            sourceSize.width: 320
-            sourceSize.height: 180
+            clip: true
             layer.enabled: true
             layer.effect: MultiEffect {
                 blurEnabled: true
-                blur: 1.0
-                blurMax: 64
-                brightness: -0.55
-                saturation: 0.4
+                blur: 1
+                blurMax: 32
+                brightness: -0.27
             }
-        }
-        Rectangle {
-            anchors.fill: parent
-            gradient: Gradient {
-                GradientStop {
-                    position: 0.0
-                    color: Qt.alpha(theme.bg, 0.9)
-                }
-                GradientStop {
-                    position: 0.35
-                    color: "transparent"
-                }
-                GradientStop {
-                    position: 0.65
-                    color: "transparent"
-                }
-                GradientStop {
-                    position: 1.0
-                    color: Qt.alpha(theme.bg, 0.95)
-                }
+
+            Image {
+                anchors.fill: parent
+                source: launcher.bgSource
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: false
+                sourceSize.width: 640
+                sourceSize.height: 360
             }
         }
 
@@ -179,9 +222,9 @@ Window {
             placeholderColor: theme.outline
             iconColor: theme.textDim
             cursorColor: theme.primary
-            selectionColor: Qt.alpha(theme.primary, 0.35)
+            selectionColor: theme.primaryContainer
             borderWidth: 2
-            borderColor: Qt.alpha(theme.textMain, 0.1)
+            borderColor: expanded ? theme.primary : theme.outlineVariant
 
             Behavior on width {
                 SpringAnimation {
@@ -199,32 +242,29 @@ Window {
                 if (e.key === Qt.Key_Down || e.key === Qt.Key_Escape) {
                     list.forceActiveFocus();
                     e.accepted = true;
+                    return;
                 }
+                if (e.key === Qt.Key_Backspace && text !== "") {
+                    sfxDelete.play();
+                    return;
+                }
+                const mods = e.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier);
+                if (e.text.length === 1 && e.text >= " " && e.text !== "\x7f" && mods === 0)
+                    sfxType.play();
             }
         }
 
         ListView {
             id: list
             readonly property real stride: 420
-            property bool animateTiles: true
             property string currentTitle: ""
             property string currentPath: ""
             property string currentCover: ""
 
-            function targetX() {
-                return originX + Math.max(0, currentIndex) * stride - leftMargin;
-            }
-
-            function snap() {
-                animateTiles = false;
-                contentX = targetX();
-                settle.restart();
-            }
-
             anchors.left: parent.left
             anchors.right: parent.right
-            y: parent.height * 0.22
-            height: parent.height * 0.5
+            y: parent.height * 0.2
+            height: parent.height * 0.56
             orientation: ListView.Horizontal
             model: library
             spacing: 40
@@ -233,30 +273,19 @@ Window {
             focus: true
             interactive: false
             keyNavigationEnabled: true
+            keyNavigationWraps: false
             cacheBuffer: 1600
-            highlightRangeMode: ListView.NoHighlightRange
-            highlightMoveDuration: 0
+            boundsBehavior: Flickable.StopAtBounds
+            highlightRangeMode: ListView.StrictlyEnforceRange
+            preferredHighlightBegin: width / 2 - 190
+            preferredHighlightEnd: width / 2 + 190
+            highlightFollowsCurrentItem: true
+            highlightMoveVelocity: -1
+            highlightMoveDuration: 420
 
             onCurrentIndexChanged: {
-                contentX = targetX();
                 if (!win.sfxMuted && currentIndex >= 0)
                     sfxNav.play();
-            }
-            onLeftMarginChanged: snap()
-            Component.onCompleted: Qt.callLater(snap)
-
-            Behavior on contentX {
-                enabled: list.animateTiles
-                SmoothedAnimation {
-                    velocity: 2600
-                    reversingMode: SmoothedAnimation.Sync
-                }
-            }
-
-            Timer {
-                id: settle
-                interval: 80
-                onTriggered: list.animateTiles = true
             }
 
             Keys.onReturnPressed: if (currentPath !== "")
@@ -278,6 +307,7 @@ Window {
                 }
                 if (e.key === Qt.Key_Backspace && win.query !== "") {
                     sfxDelete.play();
+                    searchBox.forceActiveFocus();
                     win.query = win.query.slice(0, -1);
                     e.accepted = true;
                     return;
@@ -288,6 +318,7 @@ Window {
                     if (t === " " && win.query === "")
                         return;
                     sfxType.play();
+                    searchBox.forceActiveFocus();
                     win.query += t;
                     e.accepted = true;
                 }
@@ -299,7 +330,8 @@ Window {
                 required property string image
                 required property string path
                 readonly property bool current: ListView.isCurrentItem
-                readonly property real dist: Math.min(1, Math.abs(x + width / 2 - list.contentX - list.width / 2) / list.stride)
+                readonly property real off: (x + width / 2 - list.contentX - list.width / 2) / list.stride
+                readonly property real dist: Math.min(1, Math.abs(off))
 
                 function publish() {
                     if (!current)
@@ -315,43 +347,32 @@ Window {
                 width: 380
                 height: list.height
 
-                Item {
+                Rectangle {
                     id: card
+                    readonly property int frame: 3
+
                     anchors.centerIn: parent
                     width: 380
                     height: 254
                     scale: 1.12 - 0.22 * tile.dist
-                    opacity: 1.0 - 0.4 * tile.dist
+                    color: theme.surface
 
-                    Rectangle {
+                    Item {
                         anchors.fill: parent
-                        radius: 12
-                        color: theme.surface
-                    }
+                        anchors.margins: card.frame
+                        clip: true
 
-                    Image {
-                        id: art
-                        anchors.fill: parent
-                        anchors.margins: 3
-                        source: tile.image
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: false
-                        sourceSize.width: 480
-                        visible: false
-                    }
-                    Rectangle {
-                        id: artMask
-                        anchors.fill: art
-                        radius: 9
-                        layer.enabled: true
-                        visible: false
-                    }
-                    MultiEffect {
-                        anchors.fill: art
-                        source: art
-                        maskEnabled: true
-                        maskSource: artMask
-                        visible: tile.image !== "" && art.status !== Image.Error
+                        Image {
+                            id: art
+                            anchors.fill: parent
+                            source: tile.image
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: false
+                            sourceSize.width: 480
+                            smooth: true
+                            mipmap: true
+                            visible: tile.image !== "" && status !== Image.Error
+                        }
                     }
 
                     Text {
@@ -371,28 +392,32 @@ Window {
 
         Item {
             id: selector
+            readonly property string cornerPath: {
+                const w = width;
+                const h = height;
+                const l = 26;
+                return `M 0 ${l} L 0 0 L ${l} 0 M ${w} ${h - l} L ${w} ${h} L ${w - l} ${h}`;
+            }
+
             x: list.x + list.width / 2 - width / 2
             y: list.y + list.height / 2 - height / 2
             width: 380 * 1.12
             height: 254 * 1.12
             visible: library.count > 0
 
-            Rectangle {
-                id: selectorFrame
+            Shape {
                 anchors.fill: parent
-                radius: 12 * 1.12
-                color: "transparent"
-                border.width: 3
-                border.color: theme.primary
-                visible: false
-            }
-            MultiEffect {
-                anchors.fill: selectorFrame
-                source: selectorFrame
-                shadowEnabled: true
-                shadowColor: theme.primary
-                shadowBlur: 1.0
-                shadowOpacity: 0.4
+                anchors.margins: -3
+
+                ShapePath {
+                    strokeColor: theme.primary
+                    strokeWidth: 3
+                    fillColor: "transparent"
+                    capStyle: ShapePath.SquareCap
+                    PathSvg {
+                        path: selector.cornerPath
+                    }
+                }
             }
         }
 
@@ -407,26 +432,36 @@ Window {
                     list.currentPath = "";
                     list.currentCover = "";
                 }
-                list.snap();
-                Qt.callLater(list.snap);
                 if (library.count === 0 && win.query !== "")
                     sfxNoMatch.play();
             }
         }
 
-        Text {
+        Column {
             anchors.centerIn: list
             visible: library.count === 0
-            text: win.query === "" ? "NO GAMES FOUND" : "NO MATCH FOR \"" + win.query + "\""
-            color: theme.textDim
-            font.family: theme.font
-            font.pixelSize: 24
-            font.letterSpacing: 3
+            spacing: 12
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: win.query === "" ? "No games found" : "No match for \"" + win.query + "\""
+                color: theme.textDim
+                font.family: theme.font
+                font.pixelSize: 24
+            }
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: win.query === "" ? "Drop .gba files into your ROM folder" : "Press Esc to clear the search"
+                color: theme.outline
+                font.family: theme.font
+                font.pixelSize: 14
+            }
         }
 
         Column {
+            id: info
             anchors.horizontalCenter: parent.horizontalCenter
-            y: parent.height * 0.75
+            y: Math.min(parent.height * 0.77, parent.height - 170)
             width: parent.width - theme.margin * 2
             spacing: 10
             visible: library.count > 0
@@ -437,17 +472,52 @@ Window {
                 elide: Text.ElideRight
                 text: list.currentTitle
                 color: theme.textMain
+                font.family: theme.font
                 font.pixelSize: 36
                 font.bold: true
             }
+
             Text {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
-                text: String(list.currentIndex + 1).padStart(2, "0") + " / " + String(library.count).padStart(2, "0")
-                color: theme.primary
+                text: (list.currentIndex + 1) + " / " + library.count
+                color: theme.textDim
                 font.family: theme.font
                 font.pixelSize: 16
-                font.letterSpacing: 3
+            }
+        }
+
+        Item {
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: parent.height - 56
+            width: hintRow.implicitWidth + 48
+            height: 40
+
+            Row {
+                id: hintRow
+                anchors.centerIn: parent
+                spacing: 30
+
+                KeyHint {
+                    keyText: "\u25C0  \u25B6"
+                    label: "Browse"
+                }
+                KeyHint {
+                    keyText: "Enter"
+                    label: "Launch"
+                }
+                KeyHint {
+                    keyText: "A-Z"
+                    label: "Search"
+                }
+                KeyHint {
+                    keyText: "Esc"
+                    label: "Clear"
+                }
+                KeyHint {
+                    keyText: "F11"
+                    label: "Fullscreen"
+                }
             }
         }
     }
@@ -470,6 +540,50 @@ Window {
         Keys.onReleased: e => {
             if (!e.isAutoRepeat)
                 emu.keyEvent(e.key, false);
+        }
+    }
+
+    Rectangle {
+        id: ingameHint
+        z: 10
+        visible: win.playing && win.hintVisible
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: 28
+        width: hintText.implicitWidth + 36
+        height: 32
+        color: theme.surface
+        border.width: 1
+        border.color: theme.primary
+
+        Text {
+            id: hintText
+            anchors.centerIn: parent
+            text: "Esc  \u2022  Return to menu"
+            color: theme.primary
+            font.family: theme.font
+            font.pixelSize: 13
+        }
+    }
+
+    Rectangle {
+        id: toast
+        z: 20
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: win.height - 100
+        width: toastText.implicitWidth + 44
+        height: 36
+        color: theme.dangerContainer
+        border.width: 1
+        border.color: theme.danger
+        visible: win.errorText !== ""
+
+        Text {
+            id: toastText
+            anchors.centerIn: parent
+            text: win.errorText
+            color: theme.dangerText
+            font.family: theme.font
+            font.pixelSize: 13
         }
     }
 

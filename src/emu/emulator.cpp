@@ -181,7 +181,7 @@ void Emulator::run() {
     ++frames;
     const qint64 now = clock.nsecsElapsed();
     if (now - lastReport >= 1000000000) {
-      qInfo("emulator fps: %d", frames)     ;
+      // qInfo("emulator fps: %d", frames)     ;
       frames = 0                            ;
       lastReport = now                      ;
     }
