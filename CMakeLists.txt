@@ -8,6 +8,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
 qt_standard_project_setup(REQUIRES 6.5)
 
+find_path(MGBA_INCLUDE_DIR mgba/core/core.h REQUIRED)
+find_library(MGBA_LIBRARY mgba REQUIRED)
+
 set(RYU_MODULES "Shapes" CACHE STRING "" FORCE)
 set(RYU_STATIC  ON       CACHE BOOL   "" FORCE)
 set(RYU_INSTALL OFF      CACHE BOOL   "" FORCE)
@@ -28,3 +31,7 @@ target_link_libraries(_jankk PRIVATE
 )
 
 qt_import_qml_plugins(_jankk)
+
+qt_add_executable(headless_test src/headless_test.cpp)
+target_include_directories(headless_test PRIVATE ${MGBA_INCLUDE_DIR})
+target_link_libraries(headless_test PRIVATE Qt6::Core Qt6::Gui ${MGBA_LIBRARY})
