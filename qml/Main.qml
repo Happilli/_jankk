@@ -115,19 +115,11 @@ Window {
 
     FocusScope {
         id: launcher
-        property string bgSource: ""
+        property string bgSource: library.count > 0 ? library.imageAt(list.currentIndex) : ""
 
         anchors.fill: parent
         visible: !win.playing
         focus: !win.playing
-
-        Connections {
-            target: list
-            function onCurrentItemChanged() {
-                if (list.currentItem)
-                    launcher.bgSource = list.currentItem.cover;
-            }
-        }
 
         Image {
             id: bg
@@ -137,16 +129,14 @@ Window {
             asynchronous: false
             sourceSize.width: 320
             sourceSize.height: 180
-            visible: false
-        }
-        MultiEffect {
-            anchors.fill: parent
-            source: bg
-            blurEnabled: true
-            blur: 1.0
-            blurMax: 64
-            brightness: -0.55
-            saturation: 0.4
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                blurEnabled: true
+                blur: 1.0
+                blurMax: 64
+                brightness: -0.55
+                saturation: 0.4
+            }
         }
         Rectangle {
             anchors.fill: parent
@@ -217,6 +207,9 @@ Window {
             id: list
             readonly property real stride: 420
             property bool animateTiles: true
+            property string currentTitle: ""
+            property string currentPath: ""
+            property string currentCover: ""
 
             function targetX() {
                 return originX + Math.max(0, currentIndex) * stride - leftMargin;
@@ -266,10 +259,10 @@ Window {
                 onTriggered: list.animateTiles = true
             }
 
-            Keys.onReturnPressed: if (currentItem)
-                win.launch(currentItem.path)
-            Keys.onEnterPressed: if (currentItem)
-                win.launch(currentItem.path)
+            Keys.onReturnPressed: if (currentPath !== "")
+                win.launch(currentPath)
+            Keys.onEnterPressed: if (currentPath !== "")
+                win.launch(currentPath)
             Keys.onPressed: e => {
                 if (e.key === Qt.Key_F11) {
                     win.toggleFullscreen();
@@ -305,8 +298,19 @@ Window {
                 required property string title
                 required property string image
                 required property string path
-                readonly property string cover: image
+                readonly property bool current: ListView.isCurrentItem
                 readonly property real dist: Math.min(1, Math.abs(x + width / 2 - list.contentX - list.width / 2) / list.stride)
+
+                function publish() {
+                    if (!current)
+                        return;
+                    list.currentTitle = title;
+                    list.currentPath = path;
+                    list.currentCover = image;
+                }
+
+                onCurrentChanged: publish()
+                Component.onCompleted: publish()
 
                 width: 380
                 height: list.height
@@ -398,6 +402,11 @@ Window {
                 win.sfxMuted = true;
                 list.currentIndex = library.count > 0 ? 0 : -1;
                 win.sfxMuted = false;
+                if (library.count === 0) {
+                    list.currentTitle = "";
+                    list.currentPath = "";
+                    list.currentCover = "";
+                }
                 list.snap();
                 Qt.callLater(list.snap);
                 if (library.count === 0 && win.query !== "")
@@ -426,7 +435,7 @@ Window {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
-                text: list.currentItem ? list.currentItem.title : ""
+                text: list.currentTitle
                 color: theme.textMain
                 font.pixelSize: 36
                 font.bold: true

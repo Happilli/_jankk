@@ -102,6 +102,12 @@ void GameLibrary::setFolder(const QString &f) {
   emit folderChanged()                        ;
 }
 
+QString GameLibrary::imageAt(int row) const {
+  return row >= 0 && row < m_games.size()
+    ? m_games.at(row).image
+    : QString()                               ;
+}
+
 void GameLibrary::setFilter(const QString &f) {
   if (m_filter == f)
     return                                    ;

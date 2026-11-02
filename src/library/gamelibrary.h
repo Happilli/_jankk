@@ -45,6 +45,8 @@ public:
   }
   void setFolder(const QString &f)            ;
   void setFilter(const QString &f)            ;
+  Q_INVOKABLE QString imageAt(int row)
+      const                                   ;
 
 signals:
   void folderChanged()                        ;
