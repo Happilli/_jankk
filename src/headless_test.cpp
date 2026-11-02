@@ -6,6 +6,7 @@ extern "C" {
 #include <mgba/core/core.h>
 #include <mgba/core/log.h>
 }
+
 static void quietLog(mLogger *, int, mLogLevel, const char *, va_list) {}
 static mLogger quiet = { quietLog, nullptr }         ;
 
@@ -26,12 +27,12 @@ int main (int argc, char *argv[]) {
   mCoreInitConfig(core, "jankk")                     ;
 
   unsigned w = 0, h = 0                              ;
-  core->desiredVideoDimensions(core, &w, &h)                  ;
+  core->desiredVideoDimensions(core, &w, &h)         ;
   std::printf("video size: %ux%u\n", w, h)           ;
 
   std::vector<uint32_t> buf(w * h)                   ;
   core->setVideoBuffer(core,
-        reinterpret_cast<color_t *>(buf.data()), w)   ;
+        reinterpret_cast<color_t *>(buf.data()), w)  ;
 
   if (!mCoreLoadFile(core, argv[1])) {
     std::fprintf(stderr, "failed to load rom\n")     ;
@@ -46,7 +47,7 @@ int main (int argc, char *argv[]) {
   QImage img(reinterpret_cast<uchar *>(buf.data()),
       w, h, w * 4, QImage::Format_RGBX8888)          ;
   img.save("frame.png")                              ;
-  std::printf("ran 600 frames, wrote frame.png\n")     ;
+  std::printf("ran 600 frames, wrote frame.png\n")   ;
 
   core->deinit(core)                                 ;
   

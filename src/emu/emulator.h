@@ -1,0 +1,30 @@
+#pragma once
+#include <QImage>
+#include <QString>
+#include <QThread>
+#include <QtQmlIntegration/qqmlintegration.h>
+#include <atomic>
+
+class Emulator : public QThread {
+  Q_OBJECT
+  QML_ELEMENT
+
+public: 
+  explicit Emulator(QObject *parent = nullptr);
+  ~Emulator() override                        ;
+
+  Q_INVOKABLE void play(const QString &path)  ;
+  Q_INVOKABLE void stop()                     ;
+
+signals:
+  void frameReady(const QImage &frame)        ;
+  void error(const QString &msg)              ;
+
+protected:
+  void run() override                         ;
+
+private:
+  QString m_path                              ;
+  std::atomic<bool> m_quit{false}             ;
+
+}                                             ;

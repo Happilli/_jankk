@@ -2,4 +2,4 @@ CompileFlags:
   CompilationDatabase: build
   Remove:
     - -mno-direct-extern-access*
-    - -fno-direct-access-external-data*rn-access, -fno-direct-access-external-data]
+    - -fno-direct-access-external-data*
