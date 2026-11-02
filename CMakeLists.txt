@@ -30,7 +30,7 @@ foreach(name IN LISTS SFX_NAMES)
     set_source_files_properties("${sfx_file}" PROPERTIES QT_RESOURCE_ALIAS "sfx/${name}.wav")
     list(APPEND SFX_FILES "${sfx_file}")
 endforeach()
-
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/jankk.png" PROPERTIES QT_RESOURCE_ALIAS "jankk.png")
 qt_add_executable(jankk)
 
 qt_add_qml_module(jankk
@@ -51,9 +51,10 @@ qt_add_qml_module(jankk
         src/library/gamelibrary.h
     RESOURCES
         ${SFX_FILES}
+        "${CMAKE_CURRENT_SOURCE_DIR}/jankk.png"
 )
 
-set_target_properties(jankk PROPERTIES OUTPUT_NAME _jankk)
+set_target_properties(jankk PROPERTIES OUTPUT_NAME jankk)
 
 target_include_directories(jankk PRIVATE
     "${MGBA_INCLUDE_DIR}"

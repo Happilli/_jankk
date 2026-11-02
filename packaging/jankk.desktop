@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=jankk
+Comment=GBA launcher
+Exec=jankk
+Icon=jankk
+Terminal=false
+Categories=Game;Emulator;
+StartupWMClass=jankk
