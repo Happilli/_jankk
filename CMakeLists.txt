@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 3.21)
-project(jankk VERSION 0.1.0 LANGUAGES CXX)
+project(jankk VERSION 0.1.1 LANGUAGES CXX)
+
+include(GNUInstallDirs)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_SKIP_INSTALL_RPATH ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Multimedia)
 
@@ -31,6 +34,7 @@ foreach(name IN LISTS SFX_NAMES)
     list(APPEND SFX_FILES "${sfx_file}")
 endforeach()
 set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/jankk.png" PROPERTIES QT_RESOURCE_ALIAS "jankk.png")
+
 qt_add_executable(jankk)
 
 qt_add_qml_module(jankk
@@ -64,6 +68,8 @@ target_include_directories(jankk PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/src/library"
 )
 
+target_compile_definitions(jankk PRIVATE JANKK_VERSION="${PROJECT_VERSION}")
+
 target_link_libraries(jankk PRIVATE
     Qt6::Core
     Qt6::Gui
@@ -82,4 +88,7 @@ qt_import_qml_plugins(jankk)
 qt_add_executable(headless_test src/headless_test.cpp)
 target_include_directories(headless_test PRIVATE "${MGBA_INCLUDE_DIR}")
 target_link_libraries(headless_test PRIVATE Qt6::Core Qt6::Gui "${MGBA_LIBRARY}")
-target_compile_definitions(jankk PRIVATE JANKK_VERSION="${PROJECT_VERSION}")
+
+install(TARGETS jankk RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES packaging/jankk.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+install(FILES jankk.png DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps)
