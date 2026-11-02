@@ -112,19 +112,19 @@ The name must match the ROM file exactly, including the region tags in brackets.
       <td>D-pad</td>
     </tr>
     <tr>
-      <td>A</td>
+      <td>A or X</td>
       <td>A</td>
     </tr>
     <tr>
-      <td>B</td>
+      <td>B or Y</td>
       <td>B</td>
     </tr>
     <tr>
-      <td>X</td>
+      <td>L</td>
       <td>L</td>
     </tr>
     <tr>
-      <td>Y</td>
+      <td>R</td>
       <td>R</td>
     </tr>
     <tr>
@@ -146,7 +146,7 @@ The name must match the ROM file exactly, including the region tags in brackets.
   </tbody>
 </table>
 
-> **Note:** jankk is a desktop app, but the in-game controls follow the button names of a real Game Boy Advance (A, B, L, R, Start, Select, D-pad) so they're easy to learn. A, B, Start, Select and the D-pad map to the keys you'd expect. L and R have no obvious keyboard equivalent, so they sit on **X** and **Y**.
+> **Note:** jankk is a desktop app, but the in-game controls follow the button names of a real Game Boy Advance (A, B, L, R, Start, Select, D-pad). X and Y are extra keys for A and B, so use whichever feels more comfortable.
 
 ## Command line
 

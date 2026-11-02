@@ -199,12 +199,14 @@ void Emulator::run() {
 static int gbaKeyFor(int qtKey) {
   switch (qtKey) {
     case Qt::Key_A:
+    case Qt::Key_X:
       return KEY_A                          ;
     case Qt::Key_B:
-      return KEY_B                          ;
-    case Qt::Key_X:
-      return KEY_L                          ;
     case Qt::Key_Y:
+      return KEY_B                          ;
+    case Qt::Key_L:
+      return KEY_L                          ;
+    case Qt::Key_R:
       return KEY_R                          ;
     case Qt::Key_Return:
     case Qt::Key_Enter:
@@ -223,7 +225,6 @@ static int gbaKeyFor(int qtKey) {
       return -1                             ;
   }
 }
-
 void Emulator::keyEvent(int qtKey, bool pressed) {
   const int k = gbaKeyFor(qtKey)            ;
   if (k < 0)
