@@ -27,7 +27,9 @@ void GbaView::setSource(Emulator *e) {
 }
 
 void GbaView::setFrame(const QImage &img) {
-  m_frame = img                 ;
+  m_frame =
+    img.convertToFormat(
+        QImage::Format_RGB32)   ;
   update()                      ;
 }
 
